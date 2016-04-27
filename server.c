@@ -9,6 +9,6 @@
 #include <sys/stat.h>
 
 int main() {
-	
+	int test;
 	return 0;
 }
