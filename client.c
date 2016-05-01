@@ -10,24 +10,58 @@
 #define MAX 2048
 
 void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
-	int n;
 	char sendline[MAX] = {0}, recvline[MAX] = {0};
+	/* Set the timeout value. */
 	struct timeval tv;
 	tv.tv_sec = 0;
-	tv.tv_usec = 2000;
+	tv.tv_usec = 1000;
+	/* Use select to resend data. */
 	fd_set set;
 	FD_ZERO(&set);
 	FD_SET(sockfd, &set);
-
-	sprintf(sendline, "hello");
+	/* Set socket recv timeout. */
+	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+	/* Client sends hello. */
+	sprintf(sendline, "HeLlO");
 	sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
-
-	while (select(sockfd + 1, &set, NULL, NULL, &tv)) {
-		if ((n = recvfrom(sockfd, recvline, MAX, 0, (struct sockaddr *) pservaddr, &servlen)) <= 0)
+	/* Send this packet until it successfully receive message from server.*/
+	while (1) {
+		select(sockfd + 1, &set, NULL, NULL, &tv);
+		if (recvfrom(sockfd, recvline, MAX, 0, (struct sockaddr *) pservaddr, &servlen) <= 0) {
 			sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
-		else break;
+			/*printf("tried\n");*/
+		} else break;
 	}
-
+	/* Print the welcome message sent from server. */
+	printf("%s", recvline);
+	memset(sendline, 0, sizeof(sendline));
+	memset(recvline, 0, sizeof(recvline));
+	/* Choose login or register. Wrong command will not be accepted. */
+	fgets(sendline, MAX, stdin);
+	if (sendline[0] == 'R') {
+		sprintf(sendline, "ReGiStEr");
+		sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
+		while (1) {
+			select(sockfd + 1, &set, NULL, NULL, &tv);
+			if (recvfrom(sockfd, recvline, MAX, 0, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
+			} else break;
+		}
+	} else if (sendline[0] == 'L') {
+		sprintf(sendline, "LoGiN");
+		sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
+		while (1) {
+			select(sockfd + 1, &set, NULL, NULL, &tv);
+			if (recvfrom(sockfd, recvline, MAX, 0, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
+			} else break;
+		}
+	} else {
+		printf("Command not found.\n");
+		exit(0);
+	}
+	printf("%s", recvline);
+	
 }
 
 int main(int argc, char **argv) {
@@ -42,7 +76,8 @@ int main(int argc, char **argv) {
 	servaddr.sin_port = htons(6666);
 	inet_pton(AF_INET, argv[1], &servaddr.sin_addr);
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+	
 	cli_func(sockfd, &servaddr, sizeof(servaddr));
-
+	
 	return 0;
 }

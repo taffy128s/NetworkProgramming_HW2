@@ -11,19 +11,35 @@
 #define MAX 2048
 
 void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
-	int n;
-	char sendline[MAX] = {0}, recvline[MAX] = {0};
-
-	recvfrom(sockfd, recvline, MAX, 0, (struct sockaddr *) pcliaddr, &clilen);
-	sendto(sockfd, ACK, 1, 0, (struct sockaddr *) pcliaddr, clilen);
-	printf("%s\n", recvline);
-	
+	char sendline[MAX] = {0}, recvline[MAX] = {0}, command[MAX] = {0};
+	/* Receive messages from client. */
+	while (1) {
+		recvfrom(sockfd, recvline, MAX, 0, (struct sockaddr *) pcliaddr, &clilen);
+		sscanf(recvline, "%s", command);
+		if (!strcmp("HeLlO", command)) {
+			sprintf(sendline, "**********Welcome**********\n[R]egister [L]ogin\n");
+			sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
+		} else if (!strcmp("LoGiN", command)) {
+			sprintf(sendline, "Please enter your account and password. Ex: hello 123456\n");
+			sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
+		} else if (!strcmp("ReGiStEr", command)) {
+			sprintf(sendline, "Please enter new account and password. Ex: hello 123456\n");
+			sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
+		}
+		
+		memset(sendline, 0, sizeof(sendline));
+		memset(recvline, 0, sizeof(recvline));
+		memset(command, 0, sizeof(command));
+	}
 }
 
 int main() {
 	int sockfd;
 	struct sockaddr_in servaddr, cliaddr;
 
+	mkdir("./Server", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	mkdir("./Server/User", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	memset(&servaddr, 0, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
