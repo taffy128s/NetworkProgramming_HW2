@@ -32,6 +32,12 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 			printf("%s", recvline);
 		} else if (!strcmp("ReGiStErReQuEsT", command)) {
 			printf("%s", recvline);
+			dp = opendir("./Server/User/");
+			if (dp != NULL) {
+				while (ep = readdir(dp))
+					puts(ep->d_name);
+				closedir(dp);
+			}
 		}
 
 		memset(sendline, 0, sizeof(sendline));
