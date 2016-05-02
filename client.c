@@ -57,7 +57,14 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 		fgets(buffer, MAX, stdin);
 		strcat(sendline, buffer);
 		sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
-
+		while (1) {
+			select(sockfd + 1, &set, NULL, NULL, &tv);
+			if (recvfrom(sockfd, recvline, MAX, 0, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
+			} else break;
+		}
+		printf("%s", recvline);
+		// memset
 	} else if (sendline[0] == 'L') {
 		sprintf(sendline, "LoGiN");
 		sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);

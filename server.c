@@ -14,9 +14,12 @@
 void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 	DIR *dp;
 	struct dirent *ep;
-	char sendline[MAX] = {0}, recvline[MAX] = {0}, command[MAX] = {0};
+	char sendline[MAX], recvline[MAX], command[MAX];
 	/* Receive messages from client. */
 	while (1) {
+		memset(sendline, 0, sizeof(sendline));
+		memset(recvline, 0, sizeof(recvline));
+		memset(command, 0, sizeof(command));
 		recvfrom(sockfd, recvline, MAX, 0, (struct sockaddr *) pcliaddr, &clilen);
 		sscanf(recvline, "%s", command);
 		if (!strcmp("HeLlO", command)) {
@@ -31,18 +34,36 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 		} else if (!strcmp("LoGiNrEqUeSt", command)) {
 			printf("%s", recvline);
 		} else if (!strcmp("ReGiStErReQuEsT", command)) {
-			printf("%s", recvline);
+			int found = 0;
+			char username[100] = {0}, password[100] = {0};
+			/* Parse the username and password. */
+			sscanf(recvline, "%*s%s%s", username, password);
+			/* If there's no password entered, send error message to client. */
+			if (strlen(password) == 0) {
+				sprintf(sendline, "Password cannot be null.\n");
+				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
+				continue;
+			}
+			/* Try to find out whether there exists a file with the same name. */
 			dp = opendir("./data/user/");
 			if (dp != NULL) {
-				while ((ep = readdir(dp)))
-					puts(ep->d_name);
+				while ((ep = readdir(dp))) {
+					if (!strcmp(username, ep->d_name)) {
+						found = 1;
+						break;
+					}
+				}
 				closedir(dp);
 			}
+			/* If there's a file with the same name, send error message. */
+			if (found) {
+				sprintf(sendline, "Username is used.\n");
+				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
+				continue;
+			} else {
+				
+			}
 		}
-
-		memset(sendline, 0, sizeof(sendline));
-		memset(recvline, 0, sizeof(recvline));
-		memset(command, 0, sizeof(command));
 	}
 }
 
