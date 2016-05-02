@@ -7,10 +7,13 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #define ACK "1"
 #define MAX 2048
 
 void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
+	DIR *dp;
+	struct dirent *ep;
 	char sendline[MAX] = {0}, recvline[MAX] = {0}, command[MAX] = {0};
 	/* Receive messages from client. */
 	while (1) {
@@ -25,8 +28,12 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 		} else if (!strcmp("ReGiStEr", command)) {
 			sprintf(sendline, "Please enter new account and password. Ex: hello 123456\n");
 			sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
+		} else if (!strcmp("LoGiNrEqUeSt", command)) {
+			printf("%s", recvline);
+		} else if (!strcmp("ReGiStErReQuEsT", command)) {
+			printf("%s", recvline);
 		}
-		
+
 		memset(sendline, 0, sizeof(sendline));
 		memset(recvline, 0, sizeof(recvline));
 		memset(command, 0, sizeof(command));
@@ -39,7 +46,7 @@ int main() {
 
 	mkdir("./Server", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	mkdir("./Server/User", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-	
+
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	memset(&servaddr, 0, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
