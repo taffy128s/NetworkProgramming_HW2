@@ -32,7 +32,7 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 			printf("%s", recvline);
 		} else if (!strcmp("ReGiStErReQuEsT", command)) {
 			printf("%s", recvline);
-			dp = opendir("./Server/User/");
+			dp = opendir("./data/user/");
 			if (dp != NULL) {
 				while ((ep = readdir(dp)))
 					puts(ep->d_name);
@@ -50,8 +50,8 @@ int main() {
 	int sockfd;
 	struct sockaddr_in servaddr, cliaddr;
 
-	mkdir("./Server", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-	mkdir("./Server/User", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	mkdir("./data", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	mkdir("./data/user", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	memset(&servaddr, 0, sizeof(servaddr));
