@@ -9,6 +9,12 @@
 #include <sys/stat.h>
 #define MAX 2048
 
+char name[100];
+
+void show_menu() {
+	printf("**********Hello %s**********\n", name);
+}
+
 void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 	char sendline[MAX] = {0}, recvline[MAX] = {0}, buffer[MAX] = {0};
 	/* Set the timeout value. */
@@ -64,7 +70,11 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 			} else break;
 		}
 		printf("%s", recvline);
-		// memset
+		/* Parse the information from server. */
+		char flag[100] = {0};
+		sscanf(buffer, "%s", name);
+		sscanf(recvline, "%s", flag);
+		if (strcmp("Registered", flag)) return;
 	} else if (sendline[0] == 'L') {
 		sprintf(sendline, "LoGiN");
 		sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
@@ -83,12 +93,13 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 		fgets(buffer, MAX, stdin);
 		strcat(sendline, buffer);
 		sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
-		
+
 	} else {
 		printf("Command not found.\n");
 		exit(0);
 	}
-
+	// TODO: memset
+	show_menu();
 }
 
 int main(int argc, char **argv) {

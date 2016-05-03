@@ -57,14 +57,19 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 			}
 			/* If there's a file with the same name, send error message. */
 			if (found) {
-				sprintf(sendline, "Username is either used or registered successfully, please try to login.\n");
+				sprintf(sendline, "Username is either used or registered successfully, please connect again and login.\n");
 				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
 				continue;
 			} else {
 				char path[100] = {0};
 				sprintf(path, "./data/user/");
-				
-				FILE *fp = fopen()
+				strcat(path, username);
+				//printf("%s\n", path);
+				FILE *fp = fopen(path, "wb");
+				fprintf(fp, "%s", password);
+				fclose(fp);
+				sprintf(sendline, "Registered successfully.\n");
+				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
 			}
 		}
 	}
