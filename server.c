@@ -57,7 +57,7 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 			}
 			/* If there's a file with the same name, send error message. */
 			if (found) {
-				sprintf(sendline, "Username is used.\n");
+				sprintf(sendline, "Username is either used or registered successfully, please try to login.\n");
 				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
 				continue;
 			} else {
