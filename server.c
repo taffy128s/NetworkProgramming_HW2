@@ -32,7 +32,46 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 			sprintf(sendline, "Please enter new account and password. Ex: hello 123456\n");
 			sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
 		} else if (!strcmp("LoGiNrEqUeSt", command)) {
-			printf("%s", recvline);
+			int found = 0;
+			char username[100] = {0}, password[100] = {0};
+			/* Parse the username and password. */
+			sscanf(recvline, "%*s%s%s", username, password);
+			/* If there's no password entered, send error massage to client. */
+			if (strlen(password) == 0) {
+				sprintf(sendline, "Password cannot be null.\n");
+				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
+				continue;
+			}
+			/* Try to find out whether there exists a file with the same name. */
+			dp = opendir("./data/user/");
+			if (dp != NULL) {
+				while ((ep = readdir(dp))) {
+					if (!strcmp(username, ep->d_name)) {
+						found = 1;
+						break;
+					}
+				}
+				closedir(dp);
+			}
+			/* If there's a file with the same name, send error message. */
+			if (found) {
+				char path[100] = {0}, rightPasswd[100] = {0};
+				sprintf(path, "./data/user/");
+				strcat(path, username);
+				FILE *fp = fopen(path, "rb");
+				fscanf(fp, "%s", rightPasswd);
+				fclose(fp);
+				if (!strcmp(rightPasswd, password)) {
+					sprintf(sendline, "Login successfully!\n");
+					sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
+				} else {
+					sprintf(sendline, "Wrong password.\n");
+					sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
+				}
+			} else {
+				sprintf(sendline, "Account not found.\n");
+				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
+			}
 		} else if (!strcmp("ReGiStErReQuEsT", command)) {
 			int found = 0;
 			char username[100] = {0}, password[100] = {0};
@@ -57,14 +96,12 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 			}
 			/* If there's a file with the same name, send error message. */
 			if (found) {
-				sprintf(sendline, "Username is either used or registered successfully, please connect again and login.\n");
+				sprintf(sendline, "Username is either used or registered successfully.\nPlease connect again and login.\n");
 				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
-				continue;
 			} else {
 				char path[100] = {0};
 				sprintf(path, "./data/user/");
 				strcat(path, username);
-				//printf("%s\n", path);
 				FILE *fp = fopen(path, "wb");
 				fprintf(fp, "%s", password);
 				fclose(fp);

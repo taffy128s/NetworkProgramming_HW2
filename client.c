@@ -93,7 +93,19 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 		fgets(buffer, MAX, stdin);
 		strcat(sendline, buffer);
 		sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
-
+		while (1) {
+			select(sockfd + 1, &set, NULL, NULL, &tv);
+			if (recvfrom(sockfd, recvline, MAX, 0, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pservaddr, servlen);
+			} else break;
+		}
+		/* Client print the information from the server. */
+		printf("%s", recvline);
+		/* Parse the information from server. */
+		char flag[100] = {0};
+		sscanf(buffer, "%s", name);
+		sscanf(recvline, "%s", flag);
+		if (strcmp("Login", flag)) return;
 	} else {
 		printf("Command not found.\n");
 		exit(0);
