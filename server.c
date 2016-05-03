@@ -61,7 +61,10 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
 				continue;
 			} else {
+				char path[100] = {0};
+				sprintf(path, "./data/user/");
 				
+				FILE *fp = fopen()
 			}
 		}
 	}
