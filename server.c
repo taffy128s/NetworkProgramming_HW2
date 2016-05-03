@@ -62,6 +62,7 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 				fscanf(fp, "%s", rightPasswd);
 				fclose(fp);
 				if (!strcmp(rightPasswd, password)) {
+					// TODO: user status
 					sprintf(sendline, "Login successfully!\n");
 					sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
 				} else {
@@ -105,6 +106,7 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 				FILE *fp = fopen(path, "wb");
 				fprintf(fp, "%s", password);
 				fclose(fp);
+				// TODO: user status
 				sprintf(sendline, "Registered successfully.\n");
 				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
 			}

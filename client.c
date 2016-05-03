@@ -110,7 +110,9 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 		printf("Command not found.\n");
 		exit(0);
 	}
-	// TODO: memset
+	memset(sendline, 0, sizeof(sendline));
+	memset(recvline, 0, sizeof(recvline));
+	memset(buffer, 0, sizeof(buffer));
 	show_menu();
 }
 
