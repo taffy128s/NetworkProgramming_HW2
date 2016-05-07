@@ -16,7 +16,7 @@ using namespace std;
 
 string name;
 
-void udpSend(int sockfd, const char *data, struct sockaddr *pservaddr, int servlen) {
+void udpSend(int sockfd, const char *data, struct sockaddr *pservaddr, socklen_t servlen) {
 	sendto(sockfd, data, strlen(data), 0, pservaddr, servlen);
 }
 
@@ -28,8 +28,15 @@ int udpRecvfrom(int sockfd, string &data, struct sockaddr *pservaddr, socklen_t 
 }
 
 void show_menu() {
-	printf("**********Hello %s**********\n", name.data(m));
+	printf("**********Hello %s**********\n", name.data());
 	printf("[D]elete Account\n");
+	printf("[SP]Show Profile\n");
+	printf("[SA]Show Article\n");
+	printf("[A]dd Article\n");
+	printf("[E]nter Article\n");
+	printf("[C]hat\n");
+	printf("[S]earch User\n");
+	printf("[L]ogout\n");
 }
 
 void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
@@ -46,12 +53,12 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 	/* Set socket recv timeout. */
 	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 	/* Client sends hello. */
-	udpSend(sockfd, "HeLlO", (struct sockaddr *) pservaddr, servlen);
+	udpSend(sockfd, "HeLlO\n", (struct sockaddr *) pservaddr, servlen);
 	/* Send this packet until it successfully receive message from server.*/
 	while (1) {
 		select(sockfd + 1, &set, NULL, NULL, &tv);
 		if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
-			udpSend(sockfd, "HeLlO", (struct sockaddr *) pservaddr, servlen);
+			udpSend(sockfd, "HeLlO\n", (struct sockaddr *) pservaddr, servlen);
 		} else break;
 	}
 	/* Print the welcome message sent from server. */
@@ -59,18 +66,18 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 	/* Choose login or register. Wrong command will not be accepted. */
 	getline(cin, command);
 	if (command == "R") {
-		udpSend(sockfd, "ReGiStEr", (struct sockaddr *) pservaddr, servlen);
+		udpSend(sockfd, "ReGiStEr\n", (struct sockaddr *) pservaddr, servlen);
 		while (1) {
 			select(sockfd + 1, &set, NULL, NULL, &tv);
 			if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
-				udpSend(sockfd, "ReGiStEr", (struct sockaddr *) pservaddr, servlen);
+				udpSend(sockfd, "ReGiStEr\n", (struct sockaddr *) pservaddr, servlen);
 			} else break;
 		}
 		/* Client print the information from the server. */
 		cout << stringRecv;
 		stringSend = "ReGiStErReQuEsT ";
 		getline(cin, stringBuffer);
-		stringSend += stringBuffer;
+		stringSend += stringBuffer + "\n";
 		udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
 		while (1) {
 			select(sockfd + 1, &set, NULL, NULL, &tv);
@@ -89,18 +96,18 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 		// If the registration fails, it will return;
 		if (flag != "Registered") return;
 	} else if (command == "L") {
-		udpSend(sockfd, "LoGiN", (struct sockaddr *) pservaddr, servlen);
+		udpSend(sockfd, "LoGiN\n", (struct sockaddr *) pservaddr, servlen);
 		while (1) {
 			select(sockfd + 1, &set, NULL, NULL, &tv);
 			if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
-				udpSend(sockfd, "LoGiN", (struct sockaddr *) pservaddr, servlen);
+				udpSend(sockfd, "LoGiN\n", (struct sockaddr *) pservaddr, servlen);
 			} else break;
 		}
 		/* Client print the information from the server. */
 		cout << stringRecv;
 		stringSend = "LoGiNrEqUeSt ";
 		getline(cin, stringBuffer);
-		stringSend += stringBuffer;
+		stringSend += stringBuffer + "\n";
 		udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
 		while (1) {
 			select(sockfd + 1, &set, NULL, NULL, &tv);
@@ -128,7 +135,19 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 		cout << "Your input:" << endl;
 		getline(cin, command);
 		if (command == "L") {
-			
+
+		} else if (command == "D") {
+			stringSend = name + " DeLeTeAcCoUnT\n";
+			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+			while (1) {
+				select(sockfd + 1, &set, NULL, NULL, &tv);
+				if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+				} else break;
+			}
+			cout << stringRecv;
+		} else {
+			cout << "Command not found.\n";
 		}
 	}
 }

@@ -8,16 +8,24 @@
 #include <netinet/in.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <map>
 #define ACK "1"
 #define MAX 2048
 
-void udpSend(int sockfd, const char *data, struct sockaddr *pservaddr, int servlen) {
-	sendto(sockfd, data, strlen(data), 0, pservaddr, servlen);
+using namespace std;
+
+map<string, bool> onlineStatus;
+
+void udpSend(int sockfd, const char *data, struct sockaddr *paddr, int len) {
+	sendto(sockfd, data, strlen(data), 0, paddr, len);
 }
 
-int udpRecvfrom(int sockfd, string &data, struct sockaddr *pservaddr, socklen_t *servlen) {
+int udpRecvfrom(int sockfd, string &data, struct sockaddr *paddr, socklen_t *len) {
 	char temp[MAX] = {0};
-	int retval = recvfrom(sockfd, temp, MAX, 0, pservaddr, servlen);
+	int retval = recvfrom(sockfd, temp, MAX, 0, paddr, len);
 	data = temp;
 	return retval;
 }
@@ -25,28 +33,30 @@ int udpRecvfrom(int sockfd, string &data, struct sockaddr *pservaddr, socklen_t 
 void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 	DIR *dp;
 	struct dirent *ep;
-	char sendline[MAX], recvline[MAX], command[MAX];
+	char sendline[MAX];
+	stringstream ss;
+	string stringSend, stringRecv, stringCommand, temp, name;
 	/* Receive messages from client. */
 	while (1) {
 		memset(sendline, 0, sizeof(sendline));
-		memset(recvline, 0, sizeof(recvline));
-		memset(command, 0, sizeof(command));
-		recvfrom(sockfd, recvline, MAX, 0, (struct sockaddr *) pcliaddr, &clilen);
-		sscanf(recvline, "%s", command);
-		if (!strcmp("HeLlO", command)) {
+		udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pcliaddr, &clilen);
+		ss.str("");
+		ss << stringRecv;
+		ss >> stringCommand;
+		if (stringCommand == "HeLlO") {
 			sprintf(sendline, "**********Welcome**********\n[R]egister [L]ogin\n");
 			sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
-		} else if (!strcmp("LoGiN", command)) {
+		} else if (stringCommand == "LoGiN") {
 			sprintf(sendline, "Please enter your account and password. Ex: hello 123456\n");
 			sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
-		} else if (!strcmp("ReGiStEr", command)) {
+		} else if (stringCommand == "ReGiStEr") {
 			sprintf(sendline, "Please enter new account and password. Ex: hello 123456\n");
 			sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
-		} else if (!strcmp("LoGiNrEqUeSt", command)) {
+		} else if (stringCommand == "LoGiNrEqUeSt") {
 			int found = 0;
 			char username[100] = {0}, password[100] = {0};
 			/* Parse the username and password. */
-			sscanf(recvline, "%*s%s%s", username, password);
+			sscanf(stringRecv.data(), "%*s%s%s", username, password);
 			/* If there's no password entered, send error massage to client. */
 			if (strlen(password) == 0) {
 				sprintf(sendline, "Password cannot be null.\n");
@@ -73,7 +83,8 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 				fscanf(fp, "%s", rightPasswd);
 				fclose(fp);
 				if (!strcmp(rightPasswd, password)) {
-					// TODO: user status
+					temp = username;
+					onlineStatus[temp] = true;
 					sprintf(sendline, "Login successfully!\n");
 					sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
 				} else {
@@ -84,11 +95,11 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 				sprintf(sendline, "Account not found.\n");
 				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
 			}
-		} else if (!strcmp("ReGiStErReQuEsT", command)) {
+		} else if (stringCommand == "ReGiStErReQuEsT") {
 			int found = 0;
 			char username[100] = {0}, password[100] = {0};
 			/* Parse the username and password. */
-			sscanf(recvline, "%*s%s%s", username, password);
+			sscanf(stringRecv.data(), "%*s%s%s", username, password);
 			/* If there's no password entered, send error message to client. */
 			if (strlen(password) == 0) {
 				sprintf(sendline, "Password cannot be null.\n");
@@ -117,10 +128,14 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 				FILE *fp = fopen(path, "wb");
 				fprintf(fp, "%s", password);
 				fclose(fp);
-				// TODO: user status
+				temp = username;
+				onlineStatus[temp] = true;
 				sprintf(sendline, "Registered successfully.\n");
 				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
 			}
+		} else {
+			ss.str("");
+			
 		}
 	}
 }
