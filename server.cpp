@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -10,6 +10,17 @@
 #include <dirent.h>
 #define ACK "1"
 #define MAX 2048
+
+void udpSend(int sockfd, const char *data, struct sockaddr *pservaddr, int servlen) {
+	sendto(sockfd, data, strlen(data), 0, pservaddr, servlen);
+}
+
+int udpRecvfrom(int sockfd, string &data, struct sockaddr *pservaddr, socklen_t *servlen) {
+	char temp[MAX] = {0};
+	int retval = recvfrom(sockfd, temp, MAX, 0, pservaddr, servlen);
+	data = temp;
+	return retval;
+}
 
 void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 	DIR *dp;

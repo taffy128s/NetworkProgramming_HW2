@@ -1,5 +1,5 @@
-CC = gcc -Wall
+CC = g++ -Wall
 
 compile:
-	$(CC) -o server server.c
-	$(CC) -o client client.c
+	$(CC) -o server server.cpp
+	$(CC) -o client client.cpp
