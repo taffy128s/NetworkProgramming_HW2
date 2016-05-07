@@ -12,6 +12,7 @@
 #include <sstream>
 #include <string>
 #include <map>
+#include <fstream>
 #define ACK "1"
 #define MAX 2048
 
@@ -134,8 +135,21 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 				sendto(sockfd, sendline, strlen(sendline), 0, (struct sockaddr *) pcliaddr, clilen);
 			}
 		} else {
-			ss.str("");
-			
+			char username[100] = {0}, command[100] = {0};
+			string stringUsername;
+			sscanf(stringRecv.data(), "%s%s", username, command);
+			stringUsername = username;
+			stringCommand = command;
+			if (stringCommand == "DeLeTeAcCoUnT") {
+				string path = "./data/user/";
+				path += stringUsername;
+				remove(path.data());
+				onlineStatus[stringUsername] = false;
+				udpSend(sockfd, "Delete account successfully. Logged out.\n", (struct sockaddr *) pcliaddr, clilen);
+			} else if (stringCommand == "LoGoUt") {
+				onlineStatus[stringUsername] = false;
+				udpSend(sockfd, "Logged out.\n", (struct sockaddr *) pcliaddr, clilen);
+			}
 		}
 	}
 }

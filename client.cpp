@@ -135,7 +135,19 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 		cout << "Your input:" << endl;
 		getline(cin, command);
 		if (command == "L") {
-
+			stringSend = name + " LoGoUt\n";
+			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+			while (1) {
+				select(sockfd + 1, &set, NULL, NULL, &tv);
+				if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+				} else break;
+			}
+			cout << stringRecv;
+			ss.str("");
+			ss << stringRecv;
+			ss >> flag;
+			if (flag == "Logged") break;
 		} else if (command == "D") {
 			stringSend = name + " DeLeTeAcCoUnT\n";
 			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
@@ -146,6 +158,10 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 				} else break;
 			}
 			cout << stringRecv;
+			ss.str("");
+			ss << stringRecv;
+			ss >> flag;
+			if (flag == "Delete") break;
 		} else {
 			cout << "Command not found.\n";
 		}
