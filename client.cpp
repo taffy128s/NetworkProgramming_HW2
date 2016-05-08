@@ -33,6 +33,8 @@ void show_menu() {
 	printf("[MP]Modify Profile\n");
 	printf("[SP]Show Profile\n");
 	printf("[SA]Show Article\n");
+	printf("[EA]Edit Article\n");
+	printf("[DA]Delete Article\n");
 	printf("[A]dd Article\n");
 	printf("[E]nter Article\n");
 	printf("[C]hat\n");
@@ -361,6 +363,36 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 			getline(cin, temp);
 			stringSend = "";
 			stringSend = name + " EnTeRaRtIcLe " + temp + "\n";
+			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+			while (1) {
+				select(sockfd + 1, &set, NULL, NULL, &tv);
+				if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+				} else break;
+			}
+			cout << stringRecv;
+		} else if (command == "EA") {
+			string temp, edited;
+			printf("Enter the article num you want to edit (start from 0):\n");
+			getline(cin, temp);
+			printf("Enter the new content:\n");
+			getline(cin, edited);
+			stringSend = "";
+			stringSend = name + " EdItArTiClE " + temp + " " + edited + "\n";
+			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+			while (1) {
+				select(sockfd + 1, &set, NULL, NULL, &tv);
+				if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+				} else break;
+			}
+			cout << stringRecv;
+		} else if (command == "DA") {
+			string temp;
+			printf("Enter the article num you want to delete (start from 0):\n");
+			getline(cin, temp);
+			stringSend = "";
+			stringSend  = name + " DeLeTeArTiClE " + temp + "\n";
 			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
 			while (1) {
 				select(sockfd + 1, &set, NULL, NULL, &tv);

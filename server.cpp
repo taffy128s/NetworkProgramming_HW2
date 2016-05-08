@@ -364,6 +364,35 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 				stringSend = "";
 				stringSend = articles[namee][number] + "\n";
 				udpSend(sockfd, stringSend.data(), (struct sockaddr *) pcliaddr, clilen);
+			} else if (stringCommand == "DeLeTeArTiClE") {
+				int idx;
+				sscanf(stringRecv.data(), "%*s%*s%d", &idx);
+				articles[stringUsername].erase(articles[stringUsername].begin() + idx);
+				udpSend(sockfd, "Delete successfully.\n", (struct sockaddr *) pcliaddr, clilen);
+			} else if (stringCommand == "EdItArTiClE") {
+				int idx;
+				sscanf(stringRecv.data(), "%*s%*s%d", &idx);
+				string stringidx(to_string(idx));
+				string article;
+				article += "Account: " + stringUsername + "\n";
+				string addr, port;
+				addr = inet_ntoa(pcliaddr->sin_addr);
+				port = to_string(ntohs(pcliaddr->sin_port));
+				article += "IP: " + addr + ", port: " + port + "\n";
+				article += "Content: ";
+				char data[1000] = {0};
+				int i, j = 0;
+				for (i = stringUsername.size() + 1 + stringCommand.size() + 1 + stringidx.size() + 1; i < (int) stringRecv.size(); i++) {
+					data[j++] = stringRecv[i];
+				}
+				temp = data;
+				article += temp;
+				time_t ticks;
+				ticks = time(NULL);
+				string timeeee = ctime(&ticks);
+				article += "Time: " + timeeee;
+				articles[stringUsername][idx] = article;
+				udpSend(sockfd, "Successfully edit the article.\n", (struct sockaddr *) pcliaddr, clilen);
 			}
 		}
 	}
