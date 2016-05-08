@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/wait.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/stat.h>
@@ -14,12 +16,17 @@
 #include <map>
 #include <fstream>
 #define ACK "1"
-#define MAX 2048
+#define MAX 4096
 
 using namespace std;
 
 map<string, bool> onlineStatus;
 map<pair<string, string>, bool> friendrequests;
+map<string, double> offlinetimee;
+map<pair<string, string>, string> msgs;
+map<string, string> grpmsgs; 
+struct timeval t;
+double timee;
 
 void udpSend(int sockfd, const char *data, struct sockaddr *paddr, int len) {
 	sendto(sockfd, data, strlen(data), 0, paddr, len);
@@ -40,9 +47,16 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 	string stringSend, stringRecv, stringCommand, temp, name;
 	/* Receive messages from client. */
 	while (1) {
+		ss.str("");
+		stringCommand = "";
+		stringSend = "";
+		stringRecv = "";
+		stringCommand = "";
+		temp = "";
+		name = "";
 		memset(sendline, 0, sizeof(sendline));
 		udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pcliaddr, &clilen);
-		ss.str("");
+		cout << stringRecv;
 		ss << stringRecv;
 		ss >> stringCommand;
 		if (stringCommand == "HeLlO") {
@@ -149,9 +163,17 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 				path += stringUsername;
 				remove(path.data());
 				onlineStatus[stringUsername] = false;
+				gettimeofday(&t, NULL);
+				timee = t.tv_sec * 1000.0;
+				timee += t.tv_usec / 1000.0;
+				offlinetimee[stringUsername] = timee / 1000;
 				udpSend(sockfd, "Delete account successfully. Logged out.\n", (struct sockaddr *) pcliaddr, clilen);
 			} else if (stringCommand == "LoGoUt") {
 				onlineStatus[stringUsername] = false;
+				gettimeofday(&t, NULL);
+				timee = t.tv_sec * 1000.0;
+				timee += t.tv_usec / 1000.0;
+				offlinetimee[stringUsername] = timee / 1000;
 				udpSend(sockfd, "Logged out.\n", (struct sockaddr *) pcliaddr, clilen);
 			} else if (stringCommand == "MoDiFyPrOfIlE") {
 				char nickname[100] = {0}, bd[100] = {0};
@@ -236,6 +258,64 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 				remove(path1.data());
 				remove(path2.data());
 				udpSend(sockfd, "Delete friend successfully!\n", (struct sockaddr *) pcliaddr, clilen);
+			} else if (stringCommand == "ShOwFrIeNdS") {
+				string stringpath = "./data/friend/" + stringUsername + "/";
+				dp = opendir(stringpath.data());
+				stringSend = "\n";
+				if (dp != NULL) {
+					while ((ep = readdir(dp))) {
+						temp = ep->d_name;
+						if (temp == "." || temp == "..") continue;
+						if (onlineStatus[temp]) {
+							stringSend += temp + " is online.\n";
+						} else {
+							if (offlinetimee[temp] == 0) {
+								stringSend += temp + " is never online.\n";
+							} else {
+								gettimeofday(&t, NULL);
+								timee = t.tv_sec * 1000.0;
+								timee += t.tv_usec / 1000.0;
+								timee /= 1000;
+								ostringstream strs;
+								strs << ((timee - offlinetimee[temp]) / 60);
+								string temptime = strs.str();
+								stringSend += temp + " is offline for " + temptime + " minutes.\n";
+							}
+						}
+					}
+					closedir(dp);
+				}
+				udpSend(sockfd, stringSend.data(), (struct sockaddr *) pcliaddr, clilen);
+			} else if (stringCommand == "GeTmEsSaGe") {
+				char nametosend[100] = {0};
+				string stringnametosend;
+				sscanf(stringRecv.data(), "%*s%*s%s", nametosend);
+				stringnametosend = nametosend;
+				pair<string, string> p(stringUsername, stringnametosend);
+				udpSend(sockfd, msgs[p].data(), (struct sockaddr *) pcliaddr, clilen);
+			} else if (stringCommand == "SeNdMeSsAgE") {
+				char nametosend[100] = {0}, message[100] = {0};
+				string stringnametosend, stringmessage;
+				sscanf(stringRecv.data(), "%*s%*s%s%s", nametosend, message);
+				stringnametosend = nametosend, stringmessage = message;
+				pair<string, string> p1(stringUsername, stringnametosend);
+				pair<string, string> p2(stringnametosend, stringUsername);
+				msgs[p1] += stringUsername + ": " + stringmessage + "\n";
+				msgs[p2] += stringUsername + ": " + stringmessage + "\n";
+				udpSend(sockfd, "Successfully send the msg.\n", (struct sockaddr *) pcliaddr, clilen);
+			} else if (stringCommand == "GeTmEsSaGeGrP") {
+				char grptosend[100] = {0};
+				string stringgrptosend;
+				sscanf(stringRecv.data(), "%*s%*s%s", grptosend);
+				stringgrptosend = grptosend;
+				udpSend(sockfd, grpmsgs[stringgrptosend].data(), (struct sockaddr *) pcliaddr, clilen);
+			} else if (stringCommand == "SeNdMeSsAgEgRp") {
+				char grptosend[100] = {0}, message[100] = {0};
+				string stringgrptosend, stringmessage;
+				sscanf(stringRecv.data(), "%*s%*s%s%s", grptosend, message);
+				stringgrptosend = grptosend, stringmessage = message;
+				grpmsgs[grptosend] = stringUsername + ": " + stringmessage + "\n";
+				udpSend(sockfd, "Successfully send the msg.\n", (struct sockaddr *) pcliaddr, clilen);
 			}
 		}
 	}
