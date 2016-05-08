@@ -30,6 +30,7 @@ int udpRecvfrom(int sockfd, string &data, struct sockaddr *pservaddr, socklen_t 
 void show_menu() {
 	printf("**********Hello %s**********\n", name.data());
 	printf("[D]elete Account\n");
+	printf("[MP]Modify Profile\n");
 	printf("[SP]Show Profile\n");
 	printf("[SA]Show Article\n");
 	printf("[A]dd Article\n");
@@ -162,7 +163,74 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 			ss << stringRecv;
 			ss >> flag;
 			if (flag == "Delete") break;
-		} else {
+		} else if (command == "MP") {
+			printf("Please enter your nickname and birthday. EX: taffy 1/1\n");
+			getline(cin, stringBuffer);
+			stringSend = name + " MoDiFyPrOfIlE " + stringBuffer + "\n";
+			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+			while (1) {
+				select(sockfd + 1, &set, NULL, NULL, &tv);
+				if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+				} else break;
+			}
+			cout << stringRecv;
+		} else if (command == "SP") {
+			stringSend = name + " ShOwPrOFiLe\n";
+			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+			while (1) {
+				select(sockfd + 1, &set, NULL, NULL, &tv);
+				if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+				} else break;
+			}
+			cout << stringRecv;
+		} else if (command == "S") {
+			printf("Input the account:\n");
+			getline(cin, stringBuffer);
+			stringSend = name + " SeArChAcCoUnT " + stringBuffer + "\n";
+			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+			while (1) {
+				select(sockfd + 1, &set, NULL, NULL, &tv);
+				if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+				} else break;
+			}
+			cout << stringRecv;
+			ss.str("");
+			ss << stringRecv;
+			ss >> flag;
+			if (flag == "Found.") {
+				printf("Add friend? (y/n)\n");
+				string friendtoadd = stringBuffer;
+				getline(cin, stringBuffer);
+				if (stringBuffer == "y") {
+					stringSend = name + " AdDfRiEnD " + friendtoadd + "\n";
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+					while (1) {
+						select(sockfd + 1, &set, NULL, NULL, &tv);
+						if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+							udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+						} else break;
+					}
+					cout << stringRecv;
+				}
+				printf("Delete friend? (y/n)\n");
+				getline(cin, stringBuffer);
+				if (stringBuffer == "y") {
+					stringSend = name + " DeLeTeFrIeNd " + friendtoadd + "\n";
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+					while (1) {
+						select(sockfd + 1, &set, NULL, NULL, &tv);
+						if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+							udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+						} else break;
+					}
+					cout << stringRecv;
+				}
+			}
+		}
+		else {
 			cout << "Command not found.\n";
 		}
 	}
