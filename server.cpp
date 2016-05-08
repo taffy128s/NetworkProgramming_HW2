@@ -15,6 +15,8 @@
 #include <string>
 #include <map>
 #include <fstream>
+#include <vector>
+#include <ctime>
 #define ACK "1"
 #define MAX 4096
 
@@ -27,6 +29,7 @@ map<pair<string, string>, string> msgs;
 map<string, string> grpmsgs; 
 struct timeval t;
 double timee;
+map<string, vector<string> > articles; 
 
 void udpSend(int sockfd, const char *data, struct sockaddr *paddr, int len) {
 	sendto(sockfd, data, strlen(data), 0, paddr, len);
@@ -285,6 +288,7 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 					}
 					closedir(dp);
 				}
+				stringSend += "\n";
 				udpSend(sockfd, stringSend.data(), (struct sockaddr *) pcliaddr, clilen);
 			} else if (stringCommand == "GeTmEsSaGe") {
 				char nametosend[100] = {0};
@@ -316,6 +320,50 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 				stringgrptosend = grptosend, stringmessage = message;
 				grpmsgs[grptosend] = stringUsername + ": " + stringmessage + "\n";
 				udpSend(sockfd, "Successfully send the msg.\n", (struct sockaddr *) pcliaddr, clilen);
+			} else if (stringCommand == "NeWaRtIClE") {
+				string article;
+				article += "Account: " + stringUsername + "\n";
+				string addr, port;
+				addr = inet_ntoa(pcliaddr->sin_addr);
+				port = to_string(ntohs(pcliaddr->sin_port));
+				article += "IP: " + addr + ", port: " + port + "\n";
+				article += "Content:";
+				ss.str("");
+				ss << stringRecv;
+				ss >> temp >> temp;
+				while (ss >> temp) {
+					article += " " + temp;
+				}
+				article += "\n";
+				time_t ticks;
+				ticks = time(NULL);
+				string timeeee = ctime(&ticks);
+				article += "Time: " + timeeee;
+				articles[stringUsername].push_back(article);
+				udpSend(sockfd, "Successfully add the article.\n", (struct sockaddr *) pcliaddr, clilen);
+			} else if (stringCommand == "ShOwArTiClE") {
+				string stringpath = "./data/friend/" + stringUsername + "/";
+				dp = opendir(stringpath.data());
+				stringSend = "\n";
+				stringSend += stringUsername + " has " + to_string(articles[stringUsername].size()) + " articles.\n";
+				if (dp != NULL) {
+					while ((ep = readdir(dp))) {
+						temp = ep->d_name;
+						if (temp == "." || temp == "..") continue;
+						stringSend += temp + " has " + to_string(articles[temp].size()) + " articles\n";
+					}
+					closedir(dp);
+				}
+				stringSend += "\n";
+				udpSend(sockfd, stringSend.data(), (struct sockaddr *) pcliaddr, clilen);
+			} else if (stringCommand == "EnTeRaRtIcLe") {
+				char namee[100] = {0};
+				int number;
+				sscanf(stringRecv.data(), "%*s%*s%s%d", namee, &number);
+				string target = namee;
+				stringSend = "";
+				stringSend = articles[namee][number] + "\n";
+				udpSend(sockfd, stringSend.data(), (struct sockaddr *) pcliaddr, clilen);
 			}
 		}
 	}

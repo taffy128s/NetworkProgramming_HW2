@@ -330,8 +330,46 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 					}
 				}
 			}
-		}
-		else {
+		} else if (command == "SA") {
+			stringSend = "";
+			stringSend = name + " ShOwArTiClE\n";
+			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+			while (1) {
+				select(sockfd + 1, &set, NULL, NULL, &tv);
+				if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+				} else break;
+			}
+			cout << stringRecv;
+		} else if (command == "A") {
+			printf("Your new article:\n");
+			string article;
+			getline(cin, article);
+			stringSend = "";
+			stringSend = name + " NeWaRtIClE " + article + "\n";
+			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+			while (1) {
+				select(sockfd + 1, &set, NULL, NULL, &tv);
+				if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+				} else break;
+			}
+			cout << stringRecv;
+		} else if (command == "E") {
+			printf("input <username> <numofarticle> (start from 0).\n");
+			string temp;
+			getline(cin, temp);
+			stringSend = "";
+			stringSend = name + " EnTeRaRtIcLe " + temp + "\n";
+			udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+			while (1) {
+				select(sockfd + 1, &set, NULL, NULL, &tv);
+				if (udpRecvfrom(sockfd, stringRecv, (struct sockaddr *) pservaddr, &servlen) <= 0) {
+					udpSend(sockfd, stringSend.data(), (struct sockaddr *) pservaddr, servlen);
+				} else break;
+			}
+			cout << stringRecv;
+		} else {
 			cout << "Command not found.\n";
 		}
 	}
