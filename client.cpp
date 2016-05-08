@@ -410,13 +410,13 @@ void cli_func(int sockfd, struct sockaddr_in *pservaddr, socklen_t servlen) {
 int main(int argc, char **argv) {
 	int sockfd;
 	struct sockaddr_in servaddr;
-	if (argc != 2) {
-		fprintf(stderr, "usage: ./client <IPaddress>\n");
+	if (argc != 3) {
+		fprintf(stderr, "usage: ./client <IPaddress> <port>\n");
 		exit(1);
 	}
 	memset(&servaddr, 0, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
-	servaddr.sin_port = htons(6666);
+	servaddr.sin_port = htons(atoi(argv[2]));
 	inet_pton(AF_INET, argv[1], &servaddr.sin_addr);
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 

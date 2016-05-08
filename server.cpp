@@ -398,9 +398,13 @@ void serv_func(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clilen) {
 	}
 }
 
-int main() {
+int main(int argc, char **argv) {
 	int sockfd;
 	struct sockaddr_in servaddr, cliaddr;
+	if (argc != 2) {
+		printf("usage: ./runnable <port>\n");
+		exit(0);
+	}
 
 	mkdir("./data", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	mkdir("./data/user", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -411,7 +415,7 @@ int main() {
 	memset(&servaddr, 0, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	servaddr.sin_port = htons(6666);
+	servaddr.sin_port = htons(atoi(argv[1]));
 
 	bind(sockfd, (struct sockaddr *) &servaddr, sizeof (servaddr));
 	serv_func(sockfd, &cliaddr, sizeof(cliaddr));
